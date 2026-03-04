@@ -1,0 +1,17 @@
+services:
+  lm-cc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lm-cc
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
