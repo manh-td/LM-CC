@@ -20,18 +20,19 @@ def test_remove_comments():
     assert "#" not in cleaned
     assert "comment" not in cleaned
     assert "def foo" in cleaned
-
+    
 
 # -----------------------------
-# simple_tokenize
+# compute_tau
 # -----------------------------
-def test_simple_tokenize():
-    code = "def foo(x): return x+1"
-    tokens = lmcc.simple_tokenize(code)
-    assert "def" in tokens
-    assert "(" in tokens
-    assert "+" in tokens
-    assert "1" in tokens
+def test_compute_tau_percentile():
+    entropies = [1.0, 2.0, 3.0, 4.0, 5.0]
+
+    tau = lmcc.compute_tau(entropies, percentile=60)
+
+    # ceil(5 * 0.6) - 1 = ceil(3) - 1 = 2
+    # sorted values -> index 2 = 3.0
+    assert tau == 3.0
 
 
 # -----------------------------

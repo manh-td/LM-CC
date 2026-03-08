@@ -1,3 +1,4 @@
+import math
 import re
 from collections import deque
 from dataclasses import dataclass, field
@@ -20,13 +21,6 @@ def remove_comments(code: str) -> str:
 
 
 # -----------------------------
-# Utility: Simple tokenization
-# -----------------------------
-def simple_tokenize(code: str) -> List[str]:
-    return re.findall(r"\w+|[^\w\s]", code, re.UNICODE)
-
-
-# -----------------------------
 # Compute token-level entropy
 # -----------------------------
 def compute_token_entropy(code: str, model, tokenizer):
@@ -45,6 +39,17 @@ def compute_token_entropy(code: str, model, tokenizer):
 
     tokens = tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])[1:]
     return tokens, entropies
+
+
+# -----------------------------
+# Compute threshold tau
+# -----------------------------
+def compute_tau(entropies, percentile):
+    values = sorted(entropies)
+    count = len(values)
+    index = math.ceil(count * percentile / 100.0) - 1
+    index = max(0, min(index, count - 1))
+    return values[index]
 
 
 # -----------------------------
@@ -130,7 +135,7 @@ def compute_lmcc(root: Unit, alpha=0.5):
 # -----------------------------
 # Main LM-CC Algorithm
 # -----------------------------
-def lm_cc(code: str, tau=5.0, alpha=0.5, model_name="gpt2"):
+def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name="gpt2"):
     # Load model
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
@@ -141,6 +146,9 @@ def lm_cc(code: str, tau=5.0, alpha=0.5, model_name="gpt2"):
 
     # Step 2: entropy computation
     tokens, entropies = compute_token_entropy(code, model, tokenizer)
+
+    if tau < 0:
+        tau = compute_tau(entropies, percentile=67)
 
     # Step 3: identify boundaries
     boundaries = set()
@@ -161,13 +169,23 @@ def lm_cc(code: str, tau=5.0, alpha=0.5, model_name="gpt2"):
 # Example usage
 # -----------------------------
 if __name__ == "__main__":
-    sample_code = """
-    def foo(x):
-        if x > 0:
-            return x
-        else:
-            return -x
+    sample_code = """n = int(input())
+if n % 2 == 0:
+    print(n // 2 - 1)
+else:
+    print(n // 2)
     """
-
     score = lm_cc(sample_code, tau=5.0, alpha=0.6)
-    print("LM-CC score:", score)
+    print("LM-CC score:", round(score, 2))
+    
+    sample_code = """for i in range(0, b * m + 1, m):
+    x=i
+    y=b-i/m
+    y = int(y)
+    s = ((1 + y) * y // 2) * (x + 1)
+    s += ((1 + x) * x // 2) * (y + 1)
+    sum_s.append(s)
+print(max(sum_s))
+    """
+    score = lm_cc(sample_code, tau=5.0, alpha=0.6)
+    print("LM-CC score:", round(score, 2))
