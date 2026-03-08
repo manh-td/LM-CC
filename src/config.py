@@ -1,3 +1,36 @@
 ALPHA = 0.8
 TAU = -1
 MODEL = "gpt2"
+
+EXTENSION_MAP = {
+    ".py": "python",
+    ".js": "javascript",
+    ".ts": "typescript",
+    ".java": "java",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".h": "cpp",
+    ".cs": "c_sharp",
+    ".go": "go",
+    ".rb": "ruby",
+    ".php": "php",
+    ".swift": "swift",
+    ".kt": "kotlin",
+    ".rs": "rust",
+    ".sh": "bash",
+    ".pl": "perl",
+    ".scala": "scala",
+    ".r": "r",
+    ".lua": "lua",
+    ".dart": "dart",
+    ".el": "emacs_lisp",
+    ".erl": "erlang",
+    ".hs": "haskell",
+    ".jl": "julia",
+    ".m": "objective_c",
+    ".mm": "objective_c",
+    ".sql": "sql",
+    ".vim": "vim",
+    ".tsx": "tsx",
+    ".jsx": "jsx",
+}

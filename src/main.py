@@ -1,11 +1,12 @@
 import sys
 import math
 import re
+import os
 
 from src.ast import is_syntactic_delimiter, build_delimiter_offsets
 from src.tokenizer import tokenize_code
 from src.hierarche import build_segments
-from src.config import MODEL, ALPHA
+from src.config import MODEL, ALPHA, EXTENSION_MAP
 
 # -----------------------------
 # Utility: Remove comments
@@ -57,7 +58,7 @@ def compute_lm_cc(segments, alpha):
 # -----------------------------
 # Main LM-CC Algorithm
 # -----------------------------
-def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name=MODEL):
+def lm_cc(code: str, language: str, tau=-1.0, alpha=0.5, model_name=MODEL):    
     # Step 1: preprocess
     code = remove_comments(code)
 
@@ -70,7 +71,7 @@ def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name=MODEL):
 
     # Step 3: identify boundaries
     boundary_ids = []
-    offsets = build_delimiter_offsets(code, "python")
+    offsets = build_delimiter_offsets(code, language)
 
     for token in tokens:
         if token.get("entropy") > tau or is_syntactic_delimiter(token, offsets):
@@ -94,10 +95,20 @@ if __name__ == "__main__":
         print("Usage: python main.py <file_path>")
         sys.exit(1)
     
-    print(f"Processing file: {sys.argv[1]}")
-    with open(sys.argv[1], 'r') as f:
+    file_path = sys.argv[1]
+    ext = os.path.splitext(file_path)[1].lower()
+    language = EXTENSION_MAP.get(ext, None)
+    
+    if language is None:
+        print(f"Unsupported file extension: {ext}")
+        sys.exit(1)
+    
+    print(f"Processing {language} file: {file_path}")
+    
+    with open(file_path, 'r', encoding="utf-8") as f:
         sample_code = f.read()
+    
     print(f"File content length: {len(sample_code)} characters")
     print("Computing LM-CC score...")
-    score = lm_cc(sample_code, alpha=ALPHA)
+    score = lm_cc(sample_code, language, alpha=ALPHA)
     print("LM-CC score:", round(score, 2))
