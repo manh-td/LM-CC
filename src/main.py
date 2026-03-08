@@ -3,7 +3,7 @@ import math
 import re
 import os
 
-from src.ast import is_syntactic_delimiter, build_delimiter_offsets
+from src.delimiter import is_syntactic_delimiter, build_delimiter_offsets
 from src.tokenizer import tokenize_code
 from src.hierarche import build_segments
 from src.config import MODEL, ALPHA, EXTENSION_MAP
