@@ -1,3 +1,3 @@
 #!/bin/bash
 
-PYTHONWARNINGS="ignore::FutureWarning" python3 -B -m src.main
+PYTHONWARNINGS="ignore::FutureWarning" python3 -B -m src.main /app/example-code/complex.py

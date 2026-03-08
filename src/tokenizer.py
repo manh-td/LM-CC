@@ -1,8 +1,11 @@
 import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers.utils import logging
 
-def tokenize_code(code: str, model_name="gpt2", indent_size=4):
+logging.set_verbosity_error()
+
+def tokenize_code(code: str, model_name):
     """
     Tokenizes code using a Hugging Face tokenizer, maps tokens to line/column,
     computes entropy, and adds indent_level.
@@ -73,13 +76,12 @@ def tokenize_code(code: str, model_name="gpt2", indent_size=4):
 
     return tokens_info
 
-
-# Example usage
-code = """def add(a, b):
+if __name__ == "__main__":
+    # Example usage
+    code = """def add(a, b):
     return a + b
 """
 
-if __name__ == "__main__":
     tokens_with_entropy = tokenize_code(code, model_name="gpt2")
     for t in tokens_with_entropy:
         print(t)

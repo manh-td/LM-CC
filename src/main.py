@@ -1,9 +1,11 @@
+import sys
 import math
 import re
 
 from src.ast import is_syntactic_delimiter, build_delimiter_offsets
 from src.tokenizer import tokenize_code
 from src.hierarche import build_segments
+from src.config import MODEL, ALPHA
 
 # -----------------------------
 # Utility: Remove comments
@@ -55,7 +57,7 @@ def compute_lm_cc(segments, alpha):
 # -----------------------------
 # Main LM-CC Algorithm
 # -----------------------------
-def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name="gpt2"):
+def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name=MODEL):
     # Step 1: preprocess
     code = remove_comments(code)
 
@@ -88,23 +90,14 @@ def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name="gpt2"):
 # Example usage
 # -----------------------------
 if __name__ == "__main__":
-    sample_code = """n = int(input())
-if n % 2 == 0:
-    print(n // 2 - 1)
-else:
-    print(n // 2)
-    """
-    score = lm_cc(sample_code, tau=5.0, alpha=0.6)
-    print("LM-CC score:", round(score, 2))
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <file_path>")
+        sys.exit(1)
     
-    sample_code = """for i in range(0, b * m + 1, m):
-    x=i
-    y=b-i/m
-    y = int(y)
-    s = ((1 + y) * y // 2) * (x + 1)
-    s += ((1 + x) * x // 2) * (y + 1)
-    sum_s.append(s)
-print(max(sum_s))
-    """
-    score = lm_cc(sample_code, tau=5.0, alpha=0.6)
+    print(f"Processing file: {sys.argv[1]}")
+    with open(sys.argv[1], 'r') as f:
+        sample_code = f.read()
+    print(f"File content length: {len(sample_code)} characters")
+    print("Computing LM-CC score...")
+    score = lm_cc(sample_code, alpha=ALPHA)
     print("LM-CC score:", round(score, 2))
