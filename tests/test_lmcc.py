@@ -97,8 +97,8 @@ def test_compute_lmcc_simple_tree():
 # -----------------------------
 # Mocked LM test (no real model)
 # -----------------------------
-@patch("lmcc.AutoTokenizer.from_pretrained")
-@patch("lmcc.AutoModelForCausalLM.from_pretrained")
+@patch("main.AutoTokenizer.from_pretrained")
+@patch("main.AutoModelForCausalLM.from_pretrained")
 def test_lm_cc_mocked_model(mock_model_class, mock_tokenizer_class):
 
     # Mock tokenizer
