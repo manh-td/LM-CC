@@ -1,8 +1,9 @@
 import math
 import re
 
-from src.ast import is_syntactic_delimiter, build_delimiter_offsets_and_tokens
+from src.ast import is_syntactic_delimiter, build_delimiter_offsets
 from src.tokenizer import tokenize_code
+from src.hierarche import build_segments
 
 # -----------------------------
 # Utility: Remove comments
@@ -31,6 +32,26 @@ def compute_tau(tokens, percentile):
     return values[index]
 
 
+def segment_complexity(segment):
+    entropies = [t["entropy"] for t in segment if t["entropy"] is not None]
+
+    if not entropies:
+        return 0.0
+
+    return sum(entropies) / len(entropies)
+
+
+def compute_lm_cc(segments, alpha):
+    total = 0.0
+
+    for depth, seg in enumerate(segments, start=1):
+        c = segment_complexity(seg)
+        weight = 1 + alpha * (depth - 1)
+        total += weight * c
+
+    return total
+
+
 # -----------------------------
 # Main LM-CC Algorithm
 # -----------------------------
@@ -40,25 +61,27 @@ def lm_cc(code: str, tau=-1.0, alpha=0.5, model_name="gpt2"):
 
     # Step 2: entropy computation
     tokens = tokenize_code(code, model_name)
-    print(tokens)
 
+    # Compute Tau
     if tau < 0:
         tau = compute_tau(tokens, percentile=67.0)
-    print(tau)
 
     # Step 3: identify boundaries
-    boundaries = set()
-    offsets = build_delimiter_offsets_and_tokens(code, "python")
+    boundary_ids = []
+    offsets = build_delimiter_offsets(code, "python")
 
     for token in tokens:
         if token.get("entropy") > tau or is_syntactic_delimiter(token, offsets):
-            boundaries.add(token)
+            if token.get("token_id") not in boundary_ids:
+                boundary_ids.append(token.get("token_id"))
 
     # Step 4: build semantic hierarchy
+    segments = build_segments(tokens, boundary_ids)
 
     # Step 5: compute LM-CC
+    lmcc = compute_lm_cc(segments, alpha)
 
-    return 0.0
+    return lmcc
 
 
 # -----------------------------

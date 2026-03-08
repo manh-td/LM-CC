@@ -43,7 +43,7 @@ def is_syntactic_delimiter(token, delimiter_offsets) -> bool:
     return False
 
 
-def build_delimiter_offsets_and_tokens(code: str, language_name: str):
+def build_delimiter_offsets(code: str, language_name: str):
     """
     Parses code and returns:
       - delimiter offsets: list of dicts {line, start_index, end_index, text}
@@ -107,5 +107,5 @@ if __name__ == "__main__":
                 return 42
     """
 
-    offsets = build_delimiter_offsets_and_tokens(test_code, "python")
+    offsets = build_delimiter_offsets(test_code, "python")
     print("Delimiter offsets:", offsets)

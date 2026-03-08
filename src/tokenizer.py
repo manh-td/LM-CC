@@ -2,57 +2,60 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-def tokenize_code(code: str, model_name="gpt2"):
+def tokenize_code(code: str, model_name="gpt2", indent_size=4):
     """
     Tokenizes code using a Hugging Face tokenizer, maps tokens to line/column,
-    and computes the entropy of each token based on the model's predictions.
-    Returns a list of dicts: token, token_id, line, start_index, end_index, entropy
+    computes entropy, and adds indent_level.
+
+    Returns list of dicts:
+    token, token_id, line, start_index, end_index, entropy, indent_level
     """
-    # Load model and tokenizer
+
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(model_name)
     model.eval()
 
-    # Tokenize with offsets
     inputs = tokenizer(code, return_offsets_mapping=True, return_tensors="pt")
     input_ids = inputs["input_ids"]
     offset_mapping = inputs["offset_mapping"]
 
-    # Compute logits
     with torch.no_grad():
         outputs = model(**inputs)
-        logits = outputs.logits  # shape: [1, seq_len, vocab_size]
+        logits = outputs.logits
         probs = F.softmax(logits, dim=-1)
 
-    # Build line offsets
+    # Split lines
     lines = code.splitlines(keepends=True)
+
+    # Build line start offsets
     line_start_offsets = []
     offset = 0
     for l in lines:
         line_start_offsets.append(offset)
         offset += len(l)
 
-    # Compute entropy for each token (next-token prediction)
+    # Compute entropy
     entropies = []
     for i in range(1, input_ids.shape[1]):
-        dist = probs[0, i - 1]  # distribution predicting token i
+        dist = probs[0, i - 1]
         entropy = -(dist * torch.log(dist + 1e-12)).sum().item()
         entropies.append(entropy)
 
-    # Map tokens to line/start/end
     tokens_info = []
+
     for i, (token_id, (start_char, end_char)) in enumerate(zip(input_ids[0], offset_mapping[0])):
-        # Skip special tokens with zero-length offsets
+
         if start_char == end_char:
             continue
 
-        # Find line number
+        # Determine line
         line_num = 0
         for j, line_offset in enumerate(line_start_offsets):
             if start_char >= line_offset:
                 line_num = j
             else:
                 break
+
         start_index = start_char - line_start_offsets[line_num]
         end_index = end_char - line_start_offsets[line_num]
 
@@ -65,7 +68,7 @@ def tokenize_code(code: str, model_name="gpt2"):
             "line": line_num + 1,
             "start_index": start_index.item(),
             "end_index": end_index.item(),
-            "entropy": round(entropy, 2)
+            "entropy": round(entropy, 2) if entropy is not None else None,
         })
 
     return tokens_info
